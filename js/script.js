@@ -9,24 +9,28 @@ console.log("Hello browser!");
 
 var movies = [];
 
-var mainContent = document.getElementById("main-content");
+let mainContent = document.getElementById("main-content");
 
 getMovies();
+
 console.log(movies);
-clearContent(mainContent);
 
 var content;
-
-for (let i = 0; i < movies.length; i++) {
-  movies[i].render(content);
-  console.log(content);
-}
-
-movies.forEach(movie => movie.render(content));
-
 console.log(content);
 
-mainContent.insertAdjacentElement("beforeend", content);
+function renderMainContent() {
+  mainContent.insertAdjacentElement("beforeend", content);
+}
+
+
+function sleep(milliseconds) {
+  const date = Date.now();
+  let currentDate = null;
+  do {
+    currentDate = Date.now();
+  } while (currentDate - date < milliseconds);
+}
+
 
 function clearContent(element) {
   element.innerHTML = "";
@@ -39,7 +43,7 @@ async function getMovies() {
   const triviaResponse = await fetch(triviaUrl);
   let fetchedTrivias = await triviaResponse.json();
 
-  fetchedMovies.forEach(movie => {
+  await fetchedMovies.forEach(movie => {
     let trivias = [];
     fetchedTrivias.forEach(item => {
       if (item.filmId == movie.id) {
@@ -49,25 +53,12 @@ async function getMovies() {
     let newMovie = new Movie(movie, trivias);
     movies.push(newMovie);
   });
+  content = document.createElement("section")
+  content.classList.add("movies");
+  movies.forEach(movie => movie.render(content));
+
+  renderMainContent();
 };
-
-
-function createMovieCard(movie, trivias, location) {
-  let movieContent = `
-    <div class="movie-card">
-      <div class="movie-details">
-        <h2>${movie.name}</h2>
-        <h1>Stock: ${movie.stock}</h1>
-      </div>
-      <div class="movie-trivia" id="movie-trivia">
-        <ol>
-        ${trivias.map(item => `<li>${item.trivia}</li>`)}
-        </ol>
-      </div>
-      <button onclick=getMovie(${movie.id}) class="button-success">Details</button>
-    </div>`;
-  return movieContent;
-}
 
 function createStudioInput() {
   let inputContent = `

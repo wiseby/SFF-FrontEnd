@@ -7,11 +7,10 @@ export class Movie {
 
     this.trivias = trivias;
 
-    this.html = document.createElement("section");
-    this.html.classList.add("movies");
+    this.html = document.createElement("div");
+    this.html.classList.add("movie-card");
     
     this.html.insertAdjacentHTML("beforeend", `
-    <div class="movie-card">
       <div class="movie-details">
         <h2>${movie.name}</h2>
         <h1>Stock: ${movie.stock}</h1>
@@ -22,11 +21,11 @@ export class Movie {
         </ol>
       </div>
       <button onclick=getMovie(${this.id}) class="button-success">Details</button>
-    </div>`);
+      `);
   }
 
-  render(parentElement) {
-    console.log("rendering movie with is:" + this.id);
+  render = function(parentElement) {
+    console.log("rendering movie with id:" + this.id);
     parentElement.insertAdjacentElement("beforeend", this.html);
   }
 }
