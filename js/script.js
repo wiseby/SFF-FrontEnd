@@ -1,3 +1,5 @@
+import { Movie } from './models/movie.js'
+
 var movieUrl = "http://localhost:5000/api/film";
 var studioUrl = "http://localhost:5000/api/filmstudio";
 var triviaUrl = "http://localhost:5000/api/filmTrivia";
@@ -6,61 +8,49 @@ var rentedUrl = "http://localhost:5000/api/rentedFilm";
 console.log("Hello browser!");
 
 var movies = [];
-var trivias = [];
 
 var mainContent = document.getElementById("main-content");
 
 getMovies();
+console.log(movies);
+clearContent(mainContent);
+
+var content;
+
+for (let i = 0; i < movies.length; i++) {
+  movies[i].render(content);
+  console.log(content);
+}
+
+movies.forEach(movie => movie.render(content));
+
+console.log(content);
+
+mainContent.insertAdjacentElement("beforeend", content);
 
 function clearContent(element) {
-  document.getElementById(element).innerHTML = "";
+  element.innerHTML = "";
 }
-
-function renderMovies() {
-  // All containers to be rendered in main content
-  let movieCards = [];
-
-  // Iterating through all movies
-  movies.forEach(movie => {
-
-    let movieTrivias = [];
-
-    // Iterating and matching trivia.
-    trivias.forEach(trivia => {
-      if (trivia.filmId == movie.id) {
-        movieTrivias.push(trivia);
-      }
-    })
-
-    // Make the content for movie section
-    let movieContent = createMovieCard(movie, movieTrivias);
-
-    // Make container for card
-    let movieSection = document.createElement("section");
-    movieSection.classList.add("movies");
-    movieSection.setAttribute("id", "movies");
-    movieSection.insertAdjacentHTML("beforeend", movieContent);
-    mainContent.insertAdjacentElement("beforeend", movieSection);
-  });
-}
-
-// function getMovie(id) {
-//   for (let i = 0; i < movies.length; i++) {
-//     if (movies.)
-//   }
-// }
 
 async function getMovies() {
   const movieResponse = await fetch(movieUrl);
-  movies = await movieResponse.json();
-
-  console.log(movies);
+  let fetchedMovies = await movieResponse.json();
 
   const triviaResponse = await fetch(triviaUrl);
-  trivias = await triviaResponse.json();
+  let fetchedTrivias = await triviaResponse.json();
 
-  renderMovies();
-}
+  fetchedMovies.forEach(movie => {
+    let trivias = [];
+    fetchedTrivias.forEach(item => {
+      if (item.filmId == movie.id) {
+        trivias.push(item);
+      }
+    });
+    let newMovie = new Movie(movie, trivias);
+    movies.push(newMovie);
+  });
+};
+
 
 function createMovieCard(movie, trivias, location) {
   let movieContent = `
@@ -81,6 +71,12 @@ function createMovieCard(movie, trivias, location) {
 
 function createStudioInput() {
   let inputContent = `
-    
+  <fieldset class="input-group">
+    <legend>Register Studio</legend>
+    <input for="name" type="text" placeholder="Name..." id="name">
+    <input for="location" type="text" placeholder="Location..." id="location">
+    <input for="password" type="password" placeholder="Password..." id="password">
+    <button class="submit" id="create-studio">Register</button>
+  </fieldset>
   `
 }

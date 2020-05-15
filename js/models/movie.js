@@ -1,4 +1,4 @@
-class Movie {
+export class Movie {
 
   constructor(movie, trivias) {
     this.id = movie.id;
@@ -25,7 +25,8 @@ class Movie {
     </div>`);
   }
 
-  get html() {
-    return this.html;
+  render(parentElement) {
+    console.log("rendering movie with is:" + this.id);
+    parentElement.insertAdjacentElement("beforeend", this.html);
   }
 }
