@@ -5,21 +5,32 @@ var studioUrl = "http://localhost:5000/api/filmstudio";
 var triviaUrl = "http://localhost:5000/api/filmTrivia";
 var rentedUrl = "http://localhost:5000/api/rentedFilm";
 
-console.log("Hello browser!");
+// Events and Buttons:
+let loginButton = document.getElementById("login-button");
+let registerButton = document.getElementById("register-button");
+let homeButton = document.getElementById("home-button");
+let moviesButton = document.getElementById("movies-button");
+let studiosButton = document.getElementById("studios-button");
+let logButton = document.getElementById("studios-button");
+loginButton.addEventListener("click", function() { console.log("login button pressed!") });
+registerButton.addEventListener("click", function() { console.log("register button pressed!") });
+homeButton.addEventListener("click", function() { console.log("home button pressed!") });
+moviesButton.addEventListener("click", function() { console.log("movies button pressed!") });
+studiosButton.addEventListener("click", function() { console.log("studios button pressed!") });
+logButton.addEventListener("click", function() { console.log(movies) });
 
+// Global variables and resources:
 var movies = [];
+var movieContent = null;
+var mainContent = document.getElementById("main-content");
 
-let mainContent = document.getElementById("main-content");
-
+// First default view is to show all movies.
 getMovies();
 
-console.log(movies);
 
-var content;
-console.log(content);
 
-function renderMainContent() {
-  mainContent.insertAdjacentElement("beforeend", content);
+function renderMovieContent() {
+  mainContent.insertAdjacentElement("beforeend", movieContent);
 }
 
 
@@ -36,13 +47,26 @@ function clearContent(element) {
   element.innerHTML = "";
 }
 
+function login() {
+
+}
+
+function register() {
+
+}
+
+function home() {
+
+}
+
+
 async function getMovies() {
   const movieResponse = await fetch(movieUrl);
   let fetchedMovies = await movieResponse.json();
-
+  
   const triviaResponse = await fetch(triviaUrl);
   let fetchedTrivias = await triviaResponse.json();
-
+  
   await fetchedMovies.forEach(movie => {
     let trivias = [];
     fetchedTrivias.forEach(item => {
@@ -53,21 +77,24 @@ async function getMovies() {
     let newMovie = new Movie(movie, trivias);
     movies.push(newMovie);
   });
-  content = document.createElement("section")
-  content.classList.add("movies");
-  movies.forEach(movie => movie.render(content));
-
-  renderMainContent();
+  movieContent = document.createElement("section")
+  movieContent.classList.add("movies");
+  movies.forEach(movie => {
+    movie.render(movieContent)
+    movie.detailButton.addEventListener("click", () => getMovie(movie.id), false);
+  });
+  renderMovieContent();
 };
 
-function createStudioInput() {
-  let inputContent = `
-  <fieldset class="input-group">
-    <legend>Register Studio</legend>
-    <input for="name" type="text" placeholder="Name..." id="name">
-    <input for="location" type="text" placeholder="Location..." id="location">
-    <input for="password" type="password" placeholder="Password..." id="password">
-    <button class="submit" id="create-studio">Register</button>
-  </fieldset>
-  `
+function getStudios() {
+
 }
+
+function getMovie(id) {
+  let movieFromId = movies.forEach(movie => movie.id === id);
+  let movieContent = movieFromId.render();
+  clearContent(mainContent);
+  mainContent,insertAdjacentElement("beforeend", movieContent);
+}
+
+
