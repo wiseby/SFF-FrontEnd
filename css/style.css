@@ -42,6 +42,11 @@ a.button {
   cursor: pointer;
 }
 
+.login-form {
+  display: flex;
+  margin: 5px;
+}
+
 .button-success {
   background-color: #108e1f;
 }
@@ -79,4 +84,17 @@ div.align-left {
 .nav-item {
   font-size: large;
   margin: 5px;
+}
+
+.register-user {
+  display: flex;
+  flex-flow: column wrap;
+}
+
+.dashboard-details {
+  display: flex;
+}
+
+.dashboard-actions {
+  display: flex;
 }

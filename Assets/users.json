@@ -1,0 +1,31 @@
+[
+  {
+    "name": "Lucas Wiseby",
+    "studioId": 1,
+    "loginName": "wiseby",
+    "password": "bulle"
+  },
+  {
+    "name": "Melvin Wiseby",
+    "studioId": 2,
+    "loginName": "palle",
+    "password": "1234"
+  },
+  {
+    "name": "Krister Knalle",
+    "studioId": 3,
+    "loginName": "knalle",
+    "password": "4321"
+  },
+  {
+    "name": "Konstapel Blom",
+    "studioId": 2,
+    "loginName": "blom",
+    "password": "pippi"
+  },
+  {
+    "name": "Cecilia Trumpet",
+    "loginName": "cissi",
+    "password": "krut"
+  }
+]
