@@ -87,9 +87,10 @@ async function confirmLogin() {
 
   if (matchingUser in window) {
     noUserMatch(loginUser);
-
   } else {
+    await getUserStudio(matchingUser);
     localStorage.setItem("activeUser", JSON.stringify(matchingUser));
+    console.log(matchingUser);
 
     // Create the logout button in navbarw
     let logoutButton = document.createElement("a");
@@ -108,6 +109,20 @@ async function confirmLogin() {
     );
 
     redirectToDashboard();
+  }
+}
+
+async function getUserStudio(user) {
+  if(user.studioId) {
+    const studioResponse = await fetch(studioUrl);
+    const studios = await studioResponse.json();
+
+    studios.forEach(studio => {
+      if(studio.id == user.studioId) {
+        user.studio = studio;
+      }
+    });
+    console.log(user);
   }
 }
 
@@ -132,6 +147,7 @@ async function noUserMatch() {
 async function redirectToDashboard() {
   const response = await fetch('../templates/userDashboard.html');
   const template = await response.text();
+  let activeUser = JSON.parse(localStorage.getItem("activeUser"));
   clearContent(mainContent);
   mainContent.innerHTML = template;
   console.log(template);
@@ -240,6 +256,20 @@ async function getStudios() {
   studios.forEach(studio => {
     console.log(studio.name);
   })
+}
+
+async function createStudio() {
+  const response = await fetch('../templates/registerStudio.html');
+  const template = await response.text();
+
+  clearContent(mainContent);
+  mainContent.insertAdjacentHTML("beforeend", template);
+  let confirmStudioButton = getElementById("register-studio");
+  confirmStudioButton.addEventListener("click", () => confirmStudio());
+}
+
+function confirmStudio() {
+    
 }
 
 function getMovie(id) {
