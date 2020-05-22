@@ -16,7 +16,6 @@ export class Movie {
 
     this.html = document.createElement("div");
     this.html.classList.add("movie-card");
-    
   }
 
   render = function(parentElement) {

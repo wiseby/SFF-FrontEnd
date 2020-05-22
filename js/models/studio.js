@@ -3,7 +3,7 @@ export class Studio {
 
   constructor(studio) {
     this.name = studio.name;
-    this.location = studio.location;
+    this.password = studio.password;
     this.verified = studio.verified;
 
     this.html = document.createElement("div");
@@ -18,10 +18,10 @@ export class Studio {
   buildTemplate = function() {
     
     // Base content:
+    this.html.innerHTML = "";
     this.html.insertAdjacentHTML("beforeend", `
       <div class="studio-details">
         <h2>${this.name}</h2>
-        <h1>Location: ${this.location}</h1>
       </div>
       `);
   }
