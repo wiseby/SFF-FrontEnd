@@ -1,9 +1,11 @@
 import { Movie } from './models/movie.js'
+import { Studio } from './models/studio.js'
+import { Forms }
 
-var movieUrl = "http://localhost:5000/api/film";
-var studioUrl = "http://localhost:5000/api/filmstudio";
-var triviaUrl = "http://localhost:5000/api/filmTrivia";
-var rentedUrl = "http://localhost:5000/api/rentedFilm";
+var movieUrl = "https://localhost:5002/api/film";
+var studioUrl = "https://localhost:5002/api/filmstudio";
+var triviaUrl = "https://localhost:5002/api/filmTrivia";
+var rentedUrl = "https://localhost:5002/api/rentedFilm";
 
 // Events and Buttons:
 let loginButton = document.getElementById("login-button");
@@ -48,7 +50,18 @@ function clearContent(element) {
 }
 
 function login() {
+  // Load login form
+  const response = await fetch('../templates/login.html');
+  const template = await response.text();
 
+  let loginPage = document.createElement("div");
+  loginPage.insertAdjacentHTML("beforeend", template);
+
+  clearContent(mainContent);
+  mainContent.insertAdjacentElement("beforeend", loginPage);
+
+  let confirmLoginButton = document.getElementById("confirm-login-button");
+  confirmLoginButton.addEventListener("click", () => confirmLogin());
 }
 
 function register() {
