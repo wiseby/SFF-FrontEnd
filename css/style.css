@@ -3,26 +3,30 @@ body {
   padding: 0;
 }
 
+div .form-group {
+  display: flex;
+  flex-flow: row, wrap;
+}
+
 .main-content {
   display: flex;
   width: 100%;
   margin-top: 100px;
 }
 
-.movies {
+.movie-list {
+  background-color: #f3c623;
   display: flex;
   flex-flow: row wrap;
 }
 
 .movie-card {
-  background-color: #bec2d0;
+  background-color: #127782;
   display: flex;
   padding: 20px;
   margin: 5px;
   flex: 1 20%;
   flex-flow: column wrap;
-  border: 1px solid black;
-  border-radius: 10px;
 }
 
 .movie-details {
@@ -34,12 +38,15 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+button.btn {
+  padding: 2px;
+}
+
 a.button {
-  background-color: rgb(0, 0, 0);
-  padding: 5px;
-  border-radius: 3px;
+  background-color: #519872;
   color: white;
   cursor: pointer;
+  padding: 5px;
 }
 
 .button-success {
@@ -51,9 +58,9 @@ a:hover  {
 }
 
 nav.top-navbar {
+  background-color: #10375c;
   display: flex;
   overflow: hidden;
-  position: fixed;
   top: 100px;
   height: 100;
   width: 100%;
@@ -69,7 +76,6 @@ div.align-right {
   display: flex;
   justify-content: flex-end;
   flex: 1;
-  background-color: orange;
 }
 
 div.align-left {

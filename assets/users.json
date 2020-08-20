@@ -1,0 +1,17 @@
+[
+    {
+        "name": "lucas",
+        "studioId": 1,
+        "password": "bulle"
+    },
+    {
+        "name": "kemikal",
+        "studioId": 2,
+        "password": "1234"
+    },
+    {
+        "name": "krister",
+        "studioId": 3,
+        "password": "4321"
+    }
+]
