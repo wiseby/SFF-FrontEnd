@@ -1,10 +1,10 @@
 import { Movie } from './models/movie.js';
 import { Studio } from './models/studio.js';
 
-const movieUrl = "http://localhost:5000/api/film";
-const studioUrl = "http://localhost:5000/api/filmstudio";
-const triviaUrl = "http://localhost:5000/api/filmTrivia";
-const rentedUrl = "http://localhost:5000/api/rentedFilm";
+const movieUrl = "https://localhost:5001/api/film";
+const studioUrl = "https://localhost:5001/api/filmstudio";
+const triviaUrl = "https://localhost:5001/api/filmTrivia";
+const rentedUrl = "https://localhost:5001/api/rentedFilm";
 const usersUrl = "../Assets/users.json";
 
 // Events and Buttons:
@@ -67,7 +67,7 @@ async function login() {
 
 async function confirmLogin() {
   // Load users from assets
-  const response = await fetch('../Assets/users.json');
+  const response = await fetch(studioUrl);
   const users = await response.json();
 
 
@@ -82,17 +82,14 @@ async function confirmLogin() {
   let matchingUser;
 
   users.forEach(user => {
-    if (user.loginName === loginUser.name) {
-      if (user.password === loginUser.password) {
-        matchingUser = user;
-      }
+    if (user.name === loginUser.name && user.password === loginUser.password) {
+      matchingUser = user;
     }
   });
 
   if (matchingUser in window) {
     noUserMatch(loginUser);
   } else {
-    await getUserStudio(matchingUser);
     localStorage.setItem("activeUser", JSON.stringify(matchingUser));
     console.log(matchingUser);
 
@@ -118,30 +115,12 @@ async function confirmLogin() {
       "beforeend",
       dashboardButton
     );
-    navAccountAccess.insertAdjacentElement(
-      "beforeend",
-      logoutButton
-    );
+    
+    navAccountAccess.insertAdjacentElement("beforeend", logoutButton);
 
     dashboard();
   }
 }
-
-
-async function getUserStudio(user) {
-  if(user.studioId) {
-    const studioResponse = await fetch(studioUrl);
-    const studios = await studioResponse.json();
-
-    studios.forEach(studio => {
-      if(studio.id == user.studioId) {
-        user.studio = studio;
-      }
-    });
-    console.log(user);
-  }
-}
-
 
 function logout() {
   localStorage.removeItem("activeUser");
@@ -162,19 +141,32 @@ async function noUserMatch() {
 function homeView() {
   clearContent(mainContent);
   mainContent.insertAdjacentHTML('beforeend', `
-  <h1>Welcome to SFF movie franchise!</h1>
-  <h3>Rent your movies here to be displayed at your studio</h3>
-  <h3>You just have to create an account in the top right menu!</h3>
+  <div class="container">
+    <h1>Welcome to SFF movie franchise!</h1>
+    <h3>Rent your movies here to be displayed at your studio</h3>
+    <h3>You just have to create an account in the top right menu!</h3>
+  </div>
   `); 
 }
 
 
-function movieArchive() {
+async function movieArchive() {
+  let user = JSON.parse(localStorage.getItem("activeUser"));
+  let rentedMovies = await getRentedMovies(user);
   clearContent(mainContent);
+  let showRent = (user?.verified);
+  
   movies.forEach(movie => {
+    rentedMovies.forEach(rented => { 
+      if (rented.studioId === user.id && rented.filmId === movie.id) { 
+        movie.showReturnButton = true;
+      }
+    });
+
     movie.cardTriviaLimit = 2;
-    movie.showDetailButton = true;
+    movie.showRentButton = showRent;
     movie.render(mainContent);
+    movie.resetButtons();
   });
 }
 
@@ -193,96 +185,41 @@ async function dashboard() {
   let activeUser = JSON.parse(localStorage.getItem("activeUser"));
   clearContent(mainContent);
   mainContent.innerHTML = template;
-
-  let registerStudioButton = document.getElementById("create-studio-button");
-  let rentMovieButton = document.getElementById("rent-movie-button");
-  let returnMovieButton = document.getElementById("return-movie-button");
-  registerStudioButton.addEventListener("click", () => registerStudio());  
-  rentMovieButton.addEventListener("click", () => rentMovie());
-  returnMovieButton.addEventListener("click", () => returnMovie());
-}
-
-
-async function registerStudio() {
-  const response = await fetch('../templates/registerStudio.html');
-  const template = await response.text();
-
-  clearContent(mainContent);
-  mainContent.innerHTML = template;
-  let confirmButton = document.getElementById("confirm-studio");
-  confirmButton.addEventListener("click", () => confirmStudio());
-}
-
-
-async function confirmStudio() {
-  let nameInput = document.getElementById("studio-name");
-  let passwordInput = document.getElementById("studio-password");
-
-  let studio = {
-    "name": nameInput.value,
-    "password": passwordInput.value,
-    "verified": false
-  };
-  console.log(JSON.stringify(studio));
-  const options = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(studio)
-  };
-
-  const response = await fetch(studioUrl, options);
-  const data = await response.json();
-  console.log(data);
-  if(response.status == 201) {
-    dashboard();
-
-  } else {
-    // Return error message
-  }
 }
 
 
 async function register() {
-  let response = await fetch('../templates/registerUser.html');
+  let response = await fetch('../templates/registerStudio.html');
   let template = await response.text();
 
   clearContent(mainContent);
   mainContent.insertAdjacentHTML("beforeend", template);
 
-  let confirmUserButton = document.getElementById("confirm-button");
+  let confirmUserButton = document.getElementById("confirm-studio");
   confirmUserButton.addEventListener("click", () => {
-    const name = document.getElementById("user-name");
-    const password = document.getElementById("user-password");
-    const confirmPassword = document.getElementById("confirm-user-password");
+    const name = document.getElementById("studio-name");
+    const password = document.getElementById("studio-password");
+    const confirmPassword = document.getElementById("confirm-studio-password");
     const email = document.getElementById("user-email");
 
     var activeUser = {
       "name": name.value,
       "password": (password.value === confirmPassword.value) ? password.value : null,
-      "email": email.value,
-
-      "studio": {
-        "name": "",
-        "location": "",
-        "verified": false
+      "verified": false
       }
-    };
-    console.log(activeUser);
     confirmUser(activeUser);
   });
 }
 
 
 async function confirmUser(user) {
-  let response = await fetch(usersUrl);
+  let response = await fetch(studioUrl);
   let users = await response.json();
 
   let userExists = false;
 
   users.forEach(confirmedUser => {
-    if (confirmedUser.loginName === user.name) {
+    if (confirmedUser.name === user.name) {
       userExists = true;
     }
   });
@@ -290,7 +227,24 @@ async function confirmUser(user) {
   if (userExists) { userAlreadyExists(user); }
   else {
     localStorage.setItem("activeUser", JSON.stringify(user));
-    console.log(localStorage.getItem("activeUser"));
+    
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(user)
+    };
+  
+    const response = await fetch(studioUrl, options);
+    const data = await response.json();
+    console.log(data);
+    if(response.status == 201) {
+      dashboard();
+  
+    } else {
+      // Return error message
+    }
   }
 }
 
@@ -307,6 +261,7 @@ async function userAlreadyExists(user) {
 
 
 async function getMovies() {
+
   const movieResponse = await fetch(movieUrl);
   let fetchedMovies = await movieResponse.json();
 
@@ -315,9 +270,9 @@ async function getMovies() {
 
   await fetchedMovies.forEach(movie => {
     let trivias = [];
-    fetchedTrivias.forEach(item => {
-      if (item.filmId == movie.id) {
-        trivias.push(item);
+    fetchedTrivias.forEach(trivia => {
+      if (trivia.filmId === movie.id) {
+        trivias.push(trivia);
       }
     });
     let newMovie = new Movie(movie, trivias);
@@ -325,6 +280,8 @@ async function getMovies() {
     });
     movies.forEach(movie => {
       movie.detailButton.addEventListener("click", () => getMovie(movie.id));
+      movie.rentButton.addEventListener("click", () => rentMovie(movie.id));
+      movie.returnButton.addEventListener("click", () => returnMovie(movie.id));
   })
 }
 
@@ -357,22 +314,12 @@ async function getStudios() {
 
 async function rentMovie() {
   let user = JSON.parse(localStorage.getItem("activeUser"));
-  if(user.studioId > 0) {
-    const response = await fetch('../templates/rentMovie.html');
-    const template = await response.text();
+  if (user.verified) {
+
+  }
     
-    clearContent(mainContent);
-    mainContent.insertAdjacentHTML("beforeend", template);
-    let movieSelect = document.getElementById("movie-select");
-    movies.forEach(movie => {
-      movieSelect.insertAdjacentHTML("beforeend", `<option value=${movie.id}>${movie.name}</option>`);
-    });
-    let confirmButton = document.getElementById("confirm-button");
-    confirmButton.addEventListener("click", () => confirmMovieRent(user));
-  } else {
-    userHasNoStudio();
-    return;
-  } 
+  clearContent(mainContent);
+  
 }
 
 async function confirmMovieRent(user) {
@@ -420,11 +367,6 @@ function movieNotAvailable() {
   mainContent.insertAdjacentHTML("beforeend", "<h>Movie stock 0!!!</h>");
 }
 
-function userHasNoStudio() {
-  clearContent(mainContent);
-  mainContent.insertAdjacentHTML("afterbegin", "<h1>No Studio registered for user!</h1>");  
-  mainContent.insertAdjacentHTML("beforeend", "<h2>Only users registered to a studio can rent movies!</h2>");  
-}
 
 async function returnMovie() {
   let user = JSON.parse(localStorage.getItem("activeUser"));
@@ -469,6 +411,20 @@ function confirmReturn(user) {
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(data);
+    body: JSON.stringify(data)
   }
+}
+
+async function getRentedMovies(user) {
+  let response = await fetch(rentedUrl);
+  let rentedMovies = await response.json();
+
+  let usersRents = [];
+
+  rentedMovies.forEach(movie => {
+    if (movie.studioId === user?.id) {
+      usersRents.push(movie);
+    }
+  });
+  return usersRents;
 }
