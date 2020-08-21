@@ -1,10 +1,10 @@
 import { Movie } from './models/movie.js';
 import { Studio } from './models/studio.js';
 
-const movieUrl = "https://localhost:5001/api/film";
-const studioUrl = "https://localhost:5001/api/filmstudio";
-const triviaUrl = "https://localhost:5001/api/filmTrivia";
-const rentedUrl = "https://localhost:5001/api/rentedFilm";
+const movieUrl = "http://localhost:5000/api/film";
+const studioUrl = "http://localhost:5000/api/filmstudio";
+const triviaUrl = "http://localhost:5000/api/filmTrivia";
+const rentedUrl = "http://localhost:5000/api/rentedFilm";
 const usersUrl = "../Assets/users.json";
 
 // Events and Buttons:
@@ -150,6 +150,10 @@ async function homeView() {
 
 async function movieArchive() {
   let user = JSON.parse(localStorage.getItem("activeUser"));
+
+  // movies = [];
+  // await getMovies();
+
   let rentedMovies = await getRentedMovies(user);
   clearContent(mainContent);
   let showRent = (user?.verified);
@@ -255,6 +259,9 @@ async function changeStudioStatus(studio) {
 
   let studioRes = await fetch(`${studioUrl}/${studio.id}`, options);
 
+  studio.verified = true;
+  localStorage.setItem("activeUser", JSON.stringify(studio));
+
   studios = [];
   getStudios().then(() => adminDashboard());
 }
@@ -295,7 +302,7 @@ async function confirmUser() {
     try {
       let response = await fetch(studioUrl, options);
       localStorage.setItem("activeUser", JSON.stringify(user));
-      dashboard();  
+      login();  
     } catch(error) {
       // Return error message
       console.log(error);
@@ -364,14 +371,10 @@ async function getStudios() {
 
 async function rentMovie(movie) {
   let user = JSON.parse(localStorage.getItem("activeUser"));
-  if (user?.verified) {
+  if (user?.verified && movie.stock > 0) {
     confirmMovieRent(user, movie);
-  } else { alert("User is not verified to rent movies.") }
+  } else { alert("User is not verified to rent movies or stock is 0") }
     
-  if(movie.stock < 1) {
-    movieNotAvailable();
-    return;
-  }
   
   let rentRes = await fetch(rentedUrl);
   let rentedMovies = await rentRes.json();
