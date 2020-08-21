@@ -1,28 +1,45 @@
 body {
+  background-color: #f3c623;
   margin: 0;
   padding: 0;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.row p, h1, h2, h3 {
+  text-align: center;
+}
+
+.col {
+  display: flex;
+  flex-direction: row;
 }
 
 .main-content {
   display: flex;
   width: 100%;
-  margin-top: 100px;
+  flex-direction: row;
+  justify-content: center;
 }
 
 .movies {
+  background-color: #f3c623;
   display: flex;
   flex-flow: row wrap;
 }
 
 .movie-card {
-  background-color: #bec2d0;
+  background-color: #127782;
   display: flex;
   padding: 20px;
-  margin: 5px;
+  margin: 20px;
   flex: 1 20%;
   flex-flow: column wrap;
-  border: 1px solid black;
-  border-radius: 10px;
+  max-width: 50%;
 }
 
 .movie-details {
@@ -35,9 +52,9 @@ body {
 }
 
 a.button {
-  background-color: rgb(0, 0, 0);
+  background-color: #108e1f;
+  margin: 10px;
   padding: 5px;
-  border-radius: 3px;
   color: white;
   cursor: pointer;
 }
@@ -55,10 +72,14 @@ a:hover  {
   background-color: #7fc767;
 }
 
+.center-content {
+ justify-content: center;
+}
+
 nav.top-navbar {
+  background-color: #10375c;
   display: flex;
   overflow: hidden;
-  position: fixed;
   top: 100px;
   height: 100;
   width: 100%;
@@ -74,7 +95,6 @@ div.align-right {
   display: flex;
   justify-content: flex-end;
   flex: 1;
-  background-color: orange;
 }
 
 div.align-left {
@@ -84,6 +104,7 @@ div.align-left {
 .nav-item {
   font-size: large;
   margin: 5px;
+  padding: 10px;
 }
 
 .register-user {
@@ -97,4 +118,32 @@ div.align-left {
 
 .dashboard-actions {
   display: flex;
+}
+
+.studio-details {
+  display: flex;
+}
+
+.user-dashboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-rents {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  flex: 5;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+}
+
+div.form-group input, button{
+  padding: 5px;
+  margin: 10px;
 }

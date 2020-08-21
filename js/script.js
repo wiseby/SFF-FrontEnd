@@ -18,16 +18,19 @@ studiosButton.addEventListener("click", () => studioArchive());
 // Navbar reset for login/register:
 resetAccountAccess();
 
+// Resetting user in localStorage:
+localStorage.removeItem("activeUser");
+
 // Global variables and resources:
 var movies = [];
 var studios = [];
 var mainContent = document.getElementById("main-content");
 
 // Load data from server:
-getMovies();
+getMovies().then(() => movieArchive());
+
 getStudios();
 // First default view is to show all movies.
-homeView();
 
 async function resetAccountAccess() {  
   
@@ -79,6 +82,8 @@ async function confirmLogin() {
     "password": passwordInput.value
   }
 
+  console.log(loginUser);
+
   let matchingUser;
 
   users.forEach(user => {
@@ -125,8 +130,8 @@ async function confirmLogin() {
 function logout() {
   localStorage.removeItem("activeUser");
   resetAccountAccess();
-  // Redirect to home:
-  homeView();
+  // Redirect to movieArchive:
+  movieArchive();
 }
 
 
@@ -138,15 +143,11 @@ async function noUserMatch() {
 }
 
 
-function homeView() {
+async function homeView() {
+  let templateRes = await fetch("../templates/home.html");
+  let template = await templateRes.text();
   clearContent(mainContent);
-  mainContent.insertAdjacentHTML('beforeend', `
-  <div class="container">
-    <h1>Welcome to SFF movie franchise!</h1>
-    <h3>Rent your movies here to be displayed at your studio</h3>
-    <h3>You just have to create an account in the top right menu!</h3>
-  </div>
-  `); 
+  mainContent.insertAdjacentHTML("afterbegin", template); 
 }
 
 
@@ -157,14 +158,19 @@ async function movieArchive() {
   let showRent = (user?.verified);
   
   movies.forEach(movie => {
+    movie.cardTriviaLimit = 2;
+    movie.showRentButton = showRent;
+    
     rentedMovies.forEach(rented => { 
-      if (rented.studioId === user.id && rented.filmId === movie.id) { 
+      if (rented.studioId === user.id 
+        && rented.filmId === movie.id 
+        && !rented.returned) { 
+        console.log(rented.returned);
         movie.showReturnButton = true;
+        movie.showRentButton = false;
       }
     });
 
-    movie.cardTriviaLimit = 2;
-    movie.showRentButton = showRent;
     movie.render(mainContent);
     movie.resetButtons();
   });
@@ -172,19 +178,33 @@ async function movieArchive() {
 
 
 function studioArchive() {
-  clearContent(mainContent);
+  let studioList = document.createElement("ul");
+  studioList.classList.add("row");
   studios.forEach(studio => {
-    studio.render(mainContent);
+    studio.render(studioList);
   });
+  clearContent(mainContent);
+  mainContent.insertAdjacentHTML("afterbegin", "<h1>List of studios</h1>");
+  mainContent.insertAdjacentElement("beforeend", studioList);
 }
 
 
 async function dashboard() {
   const response = await fetch('../templates/userDashboard.html');
   const template = await response.text();
+  let rents = await getUserRents();
   let activeUser = JSON.parse(localStorage.getItem("activeUser"));
   clearContent(mainContent);
   mainContent.innerHTML = template;
+  console.log(rents);
+  let movieRentsElement = document.getElementById("rented-movies");
+  rents.forEach(movie => {
+    movie.showReturnButton = true;
+    movie.render(movieRentsElement);
+  })
+
+  let adminButton = document.getElementById("admin");
+  adminButton.addEventListener("click", () => adminDashboard());
 }
 
 
@@ -197,22 +217,68 @@ async function register() {
 
   let confirmUserButton = document.getElementById("confirm-studio");
   confirmUserButton.addEventListener("click", () => {
-    const name = document.getElementById("studio-name");
-    const password = document.getElementById("studio-password");
-    const confirmPassword = document.getElementById("confirm-studio-password");
-    const email = document.getElementById("user-email");
-
-    var activeUser = {
-      "name": name.value,
-      "password": (password.value === confirmPassword.value) ? password.value : null,
-      "verified": false
-      }
-    confirmUser(activeUser);
+    confirmUser();
   });
 }
 
+async function adminDashboard() {
+  let templateRes = await fetch("../templates/adminDashboard.html");
+  let template = await templateRes.text();
 
-async function confirmUser(user) {
+  studios = [];
+  await getStudios();
+
+  clearContent(mainContent);
+  mainContent.innerHTML = template;
+
+  // Display all studios in table with toogle verified button:
+  let tableBody = document.getElementsByTagName("tbody")[0];
+
+  console.log(tableBody);
+  console.log(studios);
+
+  studios.forEach(studio => {
+    studio.tableMode = true;
+    studio.render(tableBody);
+    studio.resetViewModes();
+    studio.toggleButton.addEventListener("click", () => changeStudioStatus(studio));
+  });
+}
+
+async function changeStudioStatus(studio) {
+  const data = {
+    id: studio.id,
+    name: studio.name,
+    password: studio.password,
+    verified: !studio.verified
+  }
+
+  const options = {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  };
+
+  let studioRes = await fetch(`${studioUrl}/${studio.id}`, options);
+
+  studios = [];
+  getStudios().then(() => adminDashboard());
+}
+
+
+async function confirmUser() {    
+  let name = document.getElementById("studio-name");
+  let password = document.getElementById("studio-password");
+  let confirmPassword = document.getElementById("confirm-studio-password");
+
+  let user = {
+    "name": name.value,
+    "password": (password.value === confirmPassword.value) ? password.value : null,
+    "verified": false
+    }
+
   let response = await fetch(studioUrl);
   let users = await response.json();
 
@@ -226,7 +292,6 @@ async function confirmUser(user) {
 
   if (userExists) { userAlreadyExists(user); }
   else {
-    localStorage.setItem("activeUser", JSON.stringify(user));
     
     const options = {
       method: 'POST',
@@ -235,15 +300,13 @@ async function confirmUser(user) {
       },
       body: JSON.stringify(user)
     };
-  
-    const response = await fetch(studioUrl, options);
-    const data = await response.json();
-    console.log(data);
-    if(response.status == 201) {
-      dashboard();
-  
-    } else {
+    try {
+      let response = await fetch(studioUrl, options);
+      localStorage.setItem("activeUser", JSON.stringify(user));
+      dashboard();  
+    } catch(error) {
       // Return error message
+      console.log(error);
     }
   }
 }
@@ -279,25 +342,20 @@ async function getMovies() {
     movies.push(newMovie);
     });
     movies.forEach(movie => {
-      movie.detailButton.addEventListener("click", () => getMovie(movie.id));
-      movie.rentButton.addEventListener("click", () => rentMovie(movie.id));
-      movie.returnButton.addEventListener("click", () => returnMovie(movie.id));
+      movie.detailButton.addEventListener("click", () => getMovie(movie));
+      movie.rentButton.addEventListener("click", () => rentMovie(movie));
+      movie.returnButton.addEventListener("click", () => returnMovie(movie));
+      movie.triviaButton.addEventListener("click", () => addTrivia(movie));
   })
 }
 
 
-function getMovie(id) {
-
-  let movieFromId;
-  movies.forEach(movie => {
-    if(movie.id === id) {
-      movieFromId = movie;
-    }
-  });
-  movieFromId.cardTriviaLimit = 10;
-  movieFromId.showDetailButton = false;
+function getMovie(movie) {
+  movie.cardTriviaLimit = 10;
+  movie.showDetailButton = false;
   clearContent(mainContent);
-  movieFromId.render(mainContent);
+  movie.render(mainContent);
+  movie.showDetailButton = true;
 }
 
 
@@ -312,37 +370,43 @@ async function getStudios() {
 }
 
 
-async function rentMovie() {
+async function rentMovie(movie) {
   let user = JSON.parse(localStorage.getItem("activeUser"));
-  if (user.verified) {
-
-  }
+  if (user?.verified) {
+    confirmMovieRent(user, movie);
+  } else { alert("User is not verified to rent movies.") }
     
-  clearContent(mainContent);
-  
-}
-
-async function confirmMovieRent(user) {
-  let rentMovie = document.getElementById("movie-select").value;
-  console.log("Movie select value: " + rentMovie);
-  let movieAvailable = false;
-  movies.forEach(movie => {
-    if(movie.id == rentMovie && movie.stock > 0) {
-      movieAvailable = true;
-    }
-  })
-  if(!movieAvailable) {
+  if(movie.stock < 1) {
     movieNotAvailable();
     return;
   }
+  
+  let rentRes = await fetch(rentedUrl);
+  let rentedMovies = await rentRes.json();
+  
+
+  rentedMovies.forEach(rentedMovie => {
+    if (rentedMovie.studioId === user.id 
+      && rentedMovie.filmId == movie.id 
+      && !rentedMovie.rented) {
+      movieAlreadyRented();
+      return;
+    } 
+  });
+  
+  // Show movie rented success:
+}
+
+async function confirmMovieRent(user, movie) {
+
   const data = {
-    "filmId": Number(rentMovie),
-    "studioId": user.studioId
+    "filmId": movie.id,
+    "studioId": user.id
   };
 
   console.log("data: " + JSON.stringify(data));
 
-  const options = {
+  const postOptions = {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -350,32 +414,66 @@ async function confirmMovieRent(user) {
     body: JSON.stringify(data)
   };
 
-  const response = await fetch(rentedUrl, options);
+  const response = await fetch(rentedUrl, postOptions);
   const result = await response.json();
 
+  // Api endpoint for rentMovies has no feature removing stock when rented.
+  // We have to remove it manually and it's possible to change stock from movies
+  // endpoint.
+  movie.stock -= 1;
+
+  const putData = {
+    id: movie.id,
+    name: movie.name,
+    stock: movie.stock
+  }
+
+  console.log(movie);
+
+  const putOptions = {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(putData)
+  }
+
+  let changeStockResponse = await fetch(`${movieUrl}/${movie.id}`, putOptions); 
+  if (changeStockResponse.ok) {
+    let message = "successfully rented movie and updated stock";
+    console.log(message);
+  }
+
+
+  // Get a new fresh list of movies.
   movies = [];
-  getMovies();
+  getMovies().then(() => movieArchive());
+  
 
 
   console.log("Movie successfully rented!!!");
   console.log(result);
-
 }
 
 function movieNotAvailable() {
   clearContent(mainContent);
-  mainContent.insertAdjacentHTML("beforeend", "<h>Movie stock 0!!!</h>");
+  mainContent.insertAdjacentHTML("beforeend", "<h>Movie stock 0!!!</h1>");
+}
+
+function movieAlreadyRented() {
+  clearContent(mainContent);
+  mainContent.insertAdjacentHTML("beforeend", "<h>You already rented this movie</h>");
 }
 
 
-async function returnMovie() {
+async function returnMovie(movie) {
   let user = JSON.parse(localStorage.getItem("activeUser"));
   let studioRents = [];  
   const response = await fetch(rentedUrl);
   const result = await response.json();
 
   result.forEach(rent => {
-    if(rent.studioId == user.studioId && rent.returned == false) {
+    if(rent.studioId == user.id && rent.returned == false && rent.filmId == movie.id) {
       studioRents.push(rent);
     }
   });
@@ -383,27 +481,16 @@ async function returnMovie() {
   if(studioRents.length < 1) {
     clearContent(mainContent);
     mainContent.insertAdjacentHTML("beforeend", "<h2>No returns available for studio!</h2>");
-  } else {
-    let movieSelect = document.getElementById("movie-select");
-    studioRents.forEach(rent => {
-      movies.forEach(movie => {
-        if(rent.filmId == movie) {
-          movieSelect.insertAdjacentHTML("beforeend", `<option value="${rent.id}">${movie.name}</option>`);
-        }
-      });
-    });
-    let confirmButton = document.getElementById("confirm-button");
-    confirmButton.addEventListener("click", () => confirmReturn(user));
-  }  
+  }
+  confirmReturn(studioRents);
+  changeMovieStock(movie, 1).then(() => movieArchive());
 }
 
 
-function confirmReturn(user) {
-  let rentId = document.getElementById("movie-select").value;
-  
+async function confirmReturn(rents) {
   const data = {
-    "id": rentId,
-    "returned": true 
+    "id": rents[0].id,
+    "Returned": true 
   };
 
   const options = {
@@ -413,6 +500,33 @@ function confirmReturn(user) {
     },
     body: JSON.stringify(data)
   }
+
+  await fetch(`${rentedUrl}/${rents[0].id}`, options);
+}
+
+async function changeMovieStock(movie, quantity) {
+  // Add stock to archive and endpoint:
+  movie.stock += quantity;
+
+  const putData = {
+    id: movie.id,
+    name: movie.name,
+    stock: movie.stock
+  }
+
+  console.log(movie);
+
+  const putOptions = {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(putData)
+  }
+
+  console.log(putData);
+
+  await fetch(`${movieUrl}/${movie.id}`, putOptions); 
 }
 
 async function getRentedMovies(user) {
@@ -427,4 +541,59 @@ async function getRentedMovies(user) {
     }
   });
   return usersRents;
+}
+
+async function addTrivia(movie) {
+  let templateRes = await fetch("../templates/addTrivia.html");
+  let template = await templateRes.text();
+
+  clearContent(mainContent);
+  mainContent.insertAdjacentHTML("afterbegin", template);
+
+  let triviaAddButton = document.getElementById("add-trivia-button");
+  triviaAddButton.addEventListener("click", () => confirmTrivia(movie));
+}
+
+async function confirmTrivia(movie) {
+  let triviaTextElement = document.getElementById("trivia-content");
+  
+  const data = {
+    FilmId: movie.id,
+    Trivia: triviaTextElement.value
+  }
+
+  const options = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  }
+
+  let response = await fetch(triviaUrl, options);
+
+  movies = [];
+  getMovies().then(() => movieArchive());
+
+}
+
+async function getUserRents() {
+  let rentRes = await fetch(rentedUrl);
+  let rents = await rentRes.json();
+
+  console.log(rents);
+  
+  let user = JSON.parse(localStorage.getItem("activeUser"));
+  let rentedMovies = [];
+  movies.forEach(movie => {
+    rents.forEach(rent => {
+      if ( rent.studioId === user.id 
+        && rent.filmId == movie.id 
+        && !rent.returned) {
+        rentedMovies.push(movie);
+      } 
+    });
+  });
+
+  return rentedMovies;
 }

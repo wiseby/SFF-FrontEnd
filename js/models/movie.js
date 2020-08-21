@@ -7,6 +7,7 @@ export class Movie {
     this.stock = movie.stock;
     
     this.cardTriviaLimit = 2;
+    this.showTriviaButton = true;
     this.showRentButton = false;
     this.showReturnButton = false;
     this.showDetailButton = true;
@@ -14,6 +15,7 @@ export class Movie {
     this.rentButton;
     this.returnButton;
     this.detailButton;
+    this.triviaButton;
     this.html = document.createElement("div");
     this.html.classList.add("movie-card");
     this.trivias = trivias;
@@ -32,6 +34,12 @@ export class Movie {
     this.returnButton.classList.add("button-success");
     this.returnButton.setAttribute("id", "returnButton-" + this.id);
     this.returnButton.innerHTML = "Return";
+
+    this.triviaButton = document.createElement("a");
+    this.triviaButton.classList.add("button");
+    this.triviaButton.classList.add("button-success");
+    this.triviaButton.setAttribute("id", "triviaButton-" + this.id);
+    this.triviaButton.innerHTML = "Add Trivia";
     
     this.detailButton = document.createElement("a");
     this.detailButton.classList.add("button");
@@ -51,6 +59,9 @@ export class Movie {
     }
     if (this.showReturnButton) {
       this.html.insertAdjacentElement("beforeend", this.returnButton);
+    }
+    if (this.showTriviaButton) {
+      this.html.insertAdjacentElement("beforeend", this.triviaButton);
     }
 
   }
