@@ -82,8 +82,6 @@ async function confirmLogin() {
     "password": passwordInput.value
   }
 
-  console.log(loginUser);
-
   let matchingUser;
 
   users.forEach(user => {
@@ -96,7 +94,6 @@ async function confirmLogin() {
     noUserMatch(loginUser);
   } else {
     localStorage.setItem("activeUser", JSON.stringify(matchingUser));
-    console.log(matchingUser);
 
     // Create the logout button in navbar
     let logoutButton = document.createElement("a");
@@ -165,7 +162,6 @@ async function movieArchive() {
       if (rented.studioId === user.id 
         && rented.filmId === movie.id 
         && !rented.returned) { 
-        console.log(rented.returned);
         movie.showReturnButton = true;
         movie.showRentButton = false;
       }
@@ -196,7 +192,6 @@ async function dashboard() {
   let activeUser = JSON.parse(localStorage.getItem("activeUser"));
   clearContent(mainContent);
   mainContent.innerHTML = template;
-  console.log(rents);
   let movieRentsElement = document.getElementById("rented-movies");
   rents.forEach(movie => {
     movie.showReturnButton = true;
@@ -233,9 +228,6 @@ async function adminDashboard() {
 
   // Display all studios in table with toogle verified button:
   let tableBody = document.getElementsByTagName("tbody")[0];
-
-  console.log(tableBody);
-  console.log(studios);
 
   studios.forEach(studio => {
     studio.tableMode = true;
@@ -404,8 +396,6 @@ async function confirmMovieRent(user, movie) {
     "studioId": user.id
   };
 
-  console.log("data: " + JSON.stringify(data));
-
   const postOptions = {
     method: 'POST',
     headers: {
@@ -428,8 +418,6 @@ async function confirmMovieRent(user, movie) {
     stock: movie.stock
   }
 
-  console.log(movie);
-
   const putOptions = {
     method: 'PUT',
     headers: {
@@ -444,15 +432,9 @@ async function confirmMovieRent(user, movie) {
     console.log(message);
   }
 
-
   // Get a new fresh list of movies.
   movies = [];
   getMovies().then(() => movieArchive());
-  
-
-
-  console.log("Movie successfully rented!!!");
-  console.log(result);
 }
 
 function movieNotAvailable() {
@@ -514,8 +496,6 @@ async function changeMovieStock(movie, quantity) {
     stock: movie.stock
   }
 
-  console.log(movie);
-
   const putOptions = {
     method: 'PUT',
     headers: {
@@ -523,8 +503,6 @@ async function changeMovieStock(movie, quantity) {
     },
     body: JSON.stringify(putData)
   }
-
-  console.log(putData);
 
   await fetch(`${movieUrl}/${movie.id}`, putOptions); 
 }
@@ -580,8 +558,6 @@ async function confirmTrivia(movie) {
 async function getUserRents() {
   let rentRes = await fetch(rentedUrl);
   let rents = await rentRes.json();
-
-  console.log(rents);
   
   let user = JSON.parse(localStorage.getItem("activeUser"));
   let rentedMovies = [];
